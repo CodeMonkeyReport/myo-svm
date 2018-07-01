@@ -25,7 +25,7 @@ def feature_extraction(input_array):
 
 for letter in letters:
     for i in range(record_count):
-        X.append(feature_extraction(np.loadtxt("{0}-{1}.csv".format(i, letter), delimiter=',')))
+        X.append(feature_extraction(np.loadtxt("data/{0}-{1}.csv".format(i, letter), delimiter=',')))
         Y.append(letter)
 
 svm_learner = SVC(    # Create the SVM learner

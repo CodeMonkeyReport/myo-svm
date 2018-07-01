@@ -16,5 +16,5 @@ for letter in letters:
         input("Press Enter to begin recording. . . ")
         hub.run(listener, 1500)
         data = np.array(listener.data)
-        np.savetxt("{0}-{1}.csv".format(i, letter), data, delimiter=',')
+        np.savetxt("data/{0}-{1}.csv".format(i, letter), data, delimiter=',')
 
