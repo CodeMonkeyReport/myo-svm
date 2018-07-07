@@ -9,7 +9,7 @@ hub = libmyo.Hub()
 listener = Listener(250)
 
 letters = ['a', 'b', 'c', 'e', 'f', 'o']
-record_count = 5
+record_count = 20
 
 # Get data for each letter
 for letter in letters:
