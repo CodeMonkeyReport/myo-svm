@@ -1,19 +1,24 @@
-from sklearn.svm import SVC
+from sklearn.neural_network import MLPClassifier
 import numpy as np
 import myo as libmyo
 from listener import Listener
+import fnmatch
 import os
 import pandas as pd
+from gtts import gTTS
+from io import BytesIO
+from sklearn.model_selection import train_test_split
+from playsound import playsound
 
-letters = ['a', 'b', 'c']
-record_count = 5
+
+letters = ['a', 'b', 'c', 'e', 'f', 'o']
 
 X = []
 Y = []
 
 def feature_extraction(input_array):
     """This function takes an input array and returns back for each column
-       the std-dev, variance, abs-min, abs-max, mean, median"""
+       the std-dev, variance, min, max, mean, median"""
 
     mins = input_array.min(axis=0)
     maxs = input_array.max(axis=0)
@@ -24,32 +29,39 @@ def feature_extraction(input_array):
     return np.concatenate((mean, median, var, std, maxs, mins), axis=0)
 
 for letter in letters:
-    for i in range(record_count):
-        X.append(feature_extraction(np.loadtxt("data/{0}-{1}.csv".format(i, letter), delimiter=',')))
+    for file_name in fnmatch.filter(os.listdir('data'), "[0-9]-{0}*.csv".format(letter)):
+        X.append(feature_extraction(np.loadtxt('data/'+file_name, delimiter=',')))
         Y.append(letter)
 
-svm_learner = SVC(    # Create the SVM learner
-                    C=1.7,                           # Penalty parameter for the error
-                    kernel='linear',                    # Type of kernal
-                    degree=32,                          # Degree of polynomial kernal (ignored if not poly kernal)
-                    gamma='auto',                       # Kernal coefficient for the rbf, poly, and sigmoid kernals, auto = 1/n features used
-                    coef0=1.0,                          # Independent term (Used in poly and sigmoid)
-                    shrinking=False,                    # Use shrinking huristic or not
-                    probability=True,                   # Probability estimates
-                    tol=0.00001,                        # Tolerance for stopping criterion
-                    cache_size=1000,                    # size in MB
-                    class_weight='balanced',            # supply class weights in case of unbalanced data, 'balanced' option uses input sizes
-                    verbose=False,                      # Output all steps
-                    max_iter=-1,                        # Limit number of itterations, -1 for inf
-                    decision_function_shape='ovo',      # 
-                    random_state=None                   # Seed for the random state 'None' for always random
+nn_learner = MLPClassifier(
+                        hidden_layer_sizes=(96, 96, ), 
+                        activation='logistic', 
+                        solver='adam', 
+                        alpha=0.0001, 
+                        batch_size='auto', 
+                        learning_rate='constant', 
+                        learning_rate_init=0.1, 
+                        power_t=0.5, 
+                        max_iter=200, 
+                        shuffle=True, 
+                        random_state=None, 
+                        tol=0.0001, 
+                        verbose=False, 
+                        warm_start=False, 
+                        momentum=0.9, 
+                        nesterovs_momentum=True, 
+                        early_stopping=False, 
+                        validation_fraction=0.1, 
+                        beta_1=0.9, 
+                        beta_2=0.999, 
+                        epsilon=1e-08
 )
 
 
 
-svm_learner.fit(X, Y)
+nn_learner.fit(X, Y)
 
-libmyo.init(r'C:\Users\Michael\Documents\School\Myo\myo-sdk-win-0.9.0\bin\myo64.dll')
+libmyo.init(r'myo-sdk-win-0.9.0\bin\myo64.dll')
 hub = libmyo.Hub()
 listener = Listener(250)
 
@@ -58,4 +70,8 @@ while True:
     input("Press Enter to predict another letter")
     hub.run(listener, 1500)
     data = feature_extraction(np.array(listener.data))
-    print(svm_learner.predict(data.reshape(1, -1)))
+    res = nn_learner.predict(data.reshape(1, -1))[0]
+    print(res)
+    textToVoice = gTTS(text=res,lang='en')
+    textToVoice.save('sound.mp3')
+    playsound('sound.mp3')

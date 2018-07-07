@@ -1,5 +1,3 @@
-from sklearn.svm import SVC
-from sklearn import metrics
 import myo as libmyo
 import numpy as np
 import pandas as pd
